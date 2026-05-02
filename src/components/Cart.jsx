@@ -5,7 +5,8 @@ import { DndContext, closestCenter, PointerSensor, TouchSensor, useSensor, useSe
 import { SortableContext, verticalListSortingStrategy, arrayMove } from "@dnd-kit/sortable";
 
 export default function Cart() {
-  const { cartData, categories, setCategories,setCartPerCategory, isCartOpen, toggleCart, reorderCart, reorderCartItemsPerCategory } = useStore();
+  const { cartData, categories, setCategories,setCartPerCategory, isCartOpen, toggleCart, reorderCart, reorderCartItemsPerCategory, offers, applyOfferThroughInputField, codeOffers, removeCodeOffer } = useStore();
+  const [couponCode,setCouponCode] = useState("")
   const items = cartData.items || [];
   const itemsPerCategory = cartData.itemsPerCategory || cartData.items || []
   const tabs = [
@@ -21,6 +22,13 @@ export default function Cart() {
   useEffect(() => {
     setCategories();
   }, []);
+
+  const applyCoupon = (e) => {
+    const formData = new FormData(e.target)
+    const code = formData.get("couponCode")
+    applyOfferThroughInputField(code)
+    e.target.reset()
+  }
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
@@ -128,6 +136,67 @@ export default function Cart() {
         </div>
         {items.length > 0 && (
           <div className="p-4 border-t border-gray-200">
+            {/* Applicable offers */}
+            {offers && offers.length > 0 && (
+              <div className="mb-4">
+                <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Available Offers</p>
+                <div className="flex flex-col gap-1.5">
+                  {offers.map((offer) => (
+                    <div
+                      key={offer.id}
+                      className={`flex items-start gap-2 rounded-md px-2.5 py-2 text-xs border ${
+                        offer.autoApply
+                          ? "bg-green-50 border-green-200 text-green-800"
+                          : "bg-indigo-50 border-indigo-200 text-indigo-800"
+                      }`}
+                    >
+                      <span className="mt-0.5">
+                        {offer.autoApply ? "✓" : "🏷"}
+                      </span>
+                      <div className="flex-1">
+                        <span>{offer.description}</span>
+                        {offer.code && (
+                          <span className="ml-1.5 font-mono font-bold tracking-wider">
+                            [{offer.code}]
+                          </span>
+                        )}
+                        {offer.autoApply && (
+                          <span className="ml-1.5 font-semibold">(Auto-applied)</span>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+            {/* Applied code offers */}
+            {codeOffers && codeOffers.length > 0 && (
+              <div className="mb-3 flex flex-col gap-1.5">
+                {codeOffers.map((offer) => (
+                  <div key={offer.id} className="flex items-center justify-between gap-2 rounded-md px-2.5 py-2 text-xs bg-amber-50 border border-amber-200 text-amber-800">
+                    <span className="mr-0.5">🏷</span>
+                    <div className="flex-1">
+                      <span className="font-mono font-bold">{offer.code}</span>
+                      <span className="ml-1.5">−₹{offer.appliedDiscountValue}</span>
+                    </div>
+                    <button
+                      onClick={() => removeCodeOffer(offer.id)}
+                      className="text-amber-500 hover:text-amber-800 font-bold leading-none cursor-pointer"
+                    >✕</button>
+                  </div>
+                ))}
+              </div>
+            )}
+            {/* cuppon code section */}
+            <div className="mb-4">                 
+              <label htmlFor="coupon" className="text-sm text-gray-500">Have a coupon?</label>
+              <form onSubmit={(e) => {
+                e.preventDefault()
+                applyCoupon(e)} } className="flex mt-1">
+                <input required name="couponCode" type="text" id="coupon" placeholder="Enter coupon code" className="flex-1 border border-gray-300 rounded-l-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+                <button className="bg-indigo-600 text-white px-4 py-2 rounded-r-md text-sm font-medium hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500">Apply</button>
+              </form>
+            </div>
             <div className="flex justify-between text-sm mb-1">
               <span className="text-gray-500">Items</span>
               <span>{cartData.itmCount}</span>
