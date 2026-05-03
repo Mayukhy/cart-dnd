@@ -8,6 +8,7 @@ export default function Cart() {
   const { cartData, categories, setCategories,setCartPerCategory, isCartOpen, toggleCart, reorderCart, reorderCartItemsPerCategory, offers, applyOfferThroughInputField, codeOffers, removeCodeOffer } = useStore();
   const [couponCode,setCouponCode] = useState("")
   const items = cartData.items || [];
+  const updatedCartprice = items.reduce((sum, itm) => sum + (itm.price - (itm.price * itm.discountPercentage) / 100) * itm.quantity, 0).toFixed(2)
   const itemsPerCategory = cartData.itemsPerCategory || cartData.items || []
   const tabs = [
     {
@@ -201,6 +202,21 @@ export default function Cart() {
               <span className="text-gray-500">Items</span>
               <span>{cartData.itmCount}</span>
             </div>
+            {cartData.discount && (
+              <>
+                <div className="flex justify-between text-sm mb-1">
+                  <span className="text-gray-500">Subtotal</span>
+                  <span>${updatedCartprice}</span>
+                </div>
+                <div className="flex justify-between text-sm mb-1 text-green-600">
+                  <span className="flex items-center gap-1">
+                    {cartData.discount.autoApply ? "✓" : "🏷"}
+                    <span>{cartData.discount.autoApply ? cartData.discount.description : cartData.discount.code}</span>
+                  </span>
+                  <span>−₹{cartData.discount.appliedDiscountValue}</span>
+                </div>
+              </>
+            )}
             <div className="flex justify-between font-bold">
               <span>Total</span>
               <span className="text-green-600">

@@ -159,19 +159,21 @@ const useStore = create((set, get) => ({
       let offersPerThreshold = []
       switch (itm) {
         case "cart_threshold":
-          offersPerThreshold = coupons.filter(c => c.minCartTotal <= totalCartprice)
+          offersPerThreshold = coupons.filter(c => c.conditionType === "cart_threshold" && c.minCartTotal <= totalCartprice)
           break;
         case "product_in_cart":
-          offersPerThreshold = coupons.filter(c => updatedItems.some(it => c.productId === it.id))
+          offersPerThreshold = coupons.filter(c => c.conditionType === "product_in_cart" && updatedItems.some(it => c.productId === it.id))
           break;
         case "product_quantity":
-          offersPerThreshold = coupons.filter(c => !c.productId ? totalItemsCount >= c.minQty : updatedItems.some(itm => itm.id === c.productId && c.minQty <= updatedItems.find(p => p.id === c.productId).quantity) )
+          offersPerThreshold = coupons.filter(c => c.conditionType === "product_quantity" && (c.productId
+            ? updatedItems.some(itm => itm.id === c.productId && itm.quantity >= c.minQty)
+            : totalItemsCount >= c.minQty))
           break;
         default:
           break;
       }
       return offersPerThreshold
-    }).flat()
+    }).flat().filter(it => it.active).filter(Boolean)
     console.log("applicable offers",applicableOffers);
     const autoApplicableOffers = applicableOffers.filter(c => c.autoApply)
     if (autoApplicableOffers.length > 0) {
